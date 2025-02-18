@@ -1,0 +1,60 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+using namespace std;
+const int WIDTH = 16;
+const int HEIGHT = 16;
+
+void readPBMFile(const std::string& filePath, int image[HEIGHT][WIDTH]) {
+    std::ifstream file(filePath);
+    std::string line;
+
+    // Read and verify the magic number
+    std::getline(file, line);
+    if (line != "P1") {
+        throw std::runtime_error("File is not in P1 PBM format.");
+    }
+
+    // Skip comments
+    while (std::getline(file, line) && line[0] == '#') {}
+
+    // Read dimensions (we already know it's 16x16)
+    int width, height;
+    stringstream(line) >> width >> height;
+    if (width != WIDTH || height != HEIGHT) {
+        throw std::runtime_error("Image dimensions do not match 16x16.");
+    }
+
+    // Read pixel data
+    for (int y = 0; y < HEIGHT; ++y) {
+        for (int x = 0; x < WIDTH; ++x) {
+            file >> image[y][x];
+        }
+    }
+
+    file.close();
+}
+
+/*int main() {
+    int image[HEIGHT][WIDTH];
+    std::string filePath = "C:\\Users\\user\\Desktop\\neuro projekt\\example.pbm";
+
+    try {
+        readPBMFile(filePath, image);
+        
+        // Print the image (optional)
+        for (int y = 0; y < HEIGHT; ++y) {
+            for (int x = 0; x < WIDTH; ++x) {
+                std::cout << (image[y][x] ? '#' : ' ');
+            }
+            std::cout << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+*/
