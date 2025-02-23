@@ -9,11 +9,11 @@
     const int WIDTH = 16;
     const int HEIGHT = 16;
 
-    void readPBMFile(const string& filename, int image[HEIGHT][WIDTH]) {
+    void readPBMFile(const string& filename, vector<vector<int>>& image) {
         ifstream file(filename);
         string line;
 
-        // Read and check magic number
+        
         getline(file, line);
         if (line != "P1") {
             throw runtime_error("Not a valid P1 PBM file");
@@ -37,7 +37,7 @@
         }
     }
 
-    void writePBMFile(const string& filename, const int image[HEIGHT][WIDTH]) {
+    void writePBMFile(const string& filename, vector<vector<int>>& image) {
         ofstream file(filename);
         if (!file.is_open()) {
             throw runtime_error("Unable to open file for writing");
@@ -61,7 +61,7 @@
         cout << "PBM file written successfully." << endl;
     }
 
-    int main() {
+    /*int main() {
         int image[HEIGHT][WIDTH];
         try {
             readPBMFile("C:\\Users\\user\\Desktop\\neuro projekt\\example.pbm", image);
@@ -80,4 +80,4 @@
             return 1;
         }
         return 0;
-    }
+    }*/

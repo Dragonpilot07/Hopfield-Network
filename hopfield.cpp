@@ -3,6 +3,7 @@
 #include <random>
 #include <vector>
 
+static int counter=0;
 using namespace std;
 vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
     int n=image_size;
@@ -11,7 +12,7 @@ vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
         for(int i=0;i<n;i++){
             for(int j=0;j<n;j++){
                 if(i!=j){
-                    weights[i][j]=memory[i]*memory[j];
+                    weights[i][j]+=memory[i]*memory[j];
                 }
             }
         }
@@ -39,6 +40,7 @@ vector<int> synchronousUpdate(const vector<int> &state,const vector<vector<int>>
             sum+=weights[i][j]*state[j];
         }
         newState[i]=(sum>=0)? 1:-1;
+        counter++;
     }
     return newState;
 }
@@ -73,4 +75,11 @@ vector<int> cropMemory(const vector<int> &memory,int crop_size){
         }
     }
     return cropped_memory;
+}
+void normalizeWeights(int n,vector<vector<int>> weights){
+    for(int i=0;i<16;i++){
+        for(int j=0;j<16;j++){
+            weights[i][j]/=4;
+        }
+    }
 }
