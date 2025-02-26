@@ -12,5 +12,5 @@ vector<int> corruptMemory(const vector<int> &memory,double p);
 vector<int> synchronousUpdate(const vector<int> &state,const vector<vector<int>> &weights);
 vector<int> asynchronousUpdate(vector<int> state, const vector<vector<int>> &weights);
 vector<int> cropMemory(const vector<int> &memory,int crop_size);
-void normalizeWeights(int n);
+void normalizeWeights(vector<vector<int>>& weights, int numPatterns);
 #endif
