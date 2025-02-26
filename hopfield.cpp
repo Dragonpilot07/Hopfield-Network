@@ -20,8 +20,8 @@ vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
     return weights;
 }
 vector<int> corruptMemory(const vector<int> &memory,double p){
-    random_device rd;
-    mt19937 gen(rd());
+    static random_device rd;
+    static mt19937 gen(rd());
     bernoulli_distribution dist(p);
     vector<int> corrupted=memory;
     for(int i=0;i<image_size;i++){
