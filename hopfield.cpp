@@ -2,7 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <random> 
-
+#include <chrono>
 static int counter=0;
 using namespace std;
 vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
@@ -65,23 +65,21 @@ vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weig
     }
     return state;
 }
-vector<int> cropMemory(const vector<int> &memory,int crop_size){
-    if(crop_size>=w||crop_size<=0){
-        cerr<<"Invalid crop size. Give in the range of 0 and"<<w<<endl;
-        return memory;
-    }
-    vector<int> cropped_memory=memory;
-    int sr=(h-crop_size)/2;
-    int sc=(w-crop_size)/2;
-    for(int row=0;row<h;row++){
-        for(int col=0;col<w;col++){
-            if(row<sr||row>=sr+crop_size||col<sc||col>=sc+crop_size){
-                cropped_memory[row*w+col]=-1;
-            }
+
+
+vector<int> corruptMemory(const vector<int> &memory, double p) {
+    static mt19937 gen(chrono::steady_clock::now().time_since_epoch().count());
+    bernoulli_distribution dist(p);
+
+    vector<int> corrupted = memory;
+    for (int i = 0; i < image_size; i++) {
+        if (dist(gen)) {
+            corrupted[i] *= -1;
         }
     }
-    return cropped_memory;
+    return corrupted;
 }
+
 void normalizeWeights(int n,vector<vector<int>> weights){
     for(int i=0;i<16;i++){
         for(int j=0;j<16;j++){
