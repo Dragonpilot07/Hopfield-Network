@@ -1,7 +1,8 @@
 #include "hopfield_class.h"
 #include <iostream>
-#include <random>
 #include <vector>
+#include <random> 
+std::mt19937 globalGenerator(std::random_device{}());
 
 static int counter=0;
 using namespace std;
