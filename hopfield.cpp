@@ -17,6 +17,7 @@ vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
             }
         }
     }
+    normalizeWeights(weights, memories.size());
     return weights;
 }
 vector<int> corruptMemory(const vector<int> &memory,double p){
