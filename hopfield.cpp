@@ -110,20 +110,20 @@ void normalizeWeights(int n,vector<vector<int>> weights){
     }
 }
 vector<int> cropMemory(const vector<int>& memory, int crop_size) {
-    if (crop_size >= WIDTH || crop_size <= 0) {
+    if (crop_size >= w || crop_size <= 0) {
         cerr << "Invalid crop size.  Must be between 0 and " << WIDTH << endl;
         return memory; // Or handle the error as appropriate
     }
 
     vector<int> cropped_memory = memory;
-    int start_row = (HEIGHT - crop_size) / 2;
-    int start_col = (WIDTH - crop_size) / 2;
+    int start_row = (h - crop_size) / 2;
+    int start_col = (w - crop_size) / 2;
 
-    for (int row = 0; row < HEIGHT; ++row) {
-        for (int col = 0; col < WIDTH; ++col) {
+    for (int row = 0; row < h; ++row) {
+        for (int col = 0; col < w; ++col) {
             if (row < start_row || row >= start_row + crop_size ||
                 col < start_col || col >= start_col + crop_size) {
-                cropped_memory[row * WIDTH + col] = -1;  // Set to "black" (-1)
+                cropped_memory[row * w + col] = -1;  // Set to "black" (-1)
             }
         }
     }
