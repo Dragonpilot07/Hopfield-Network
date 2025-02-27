@@ -1,7 +1,7 @@
 #include "hopfield_class.h"
 #include <iostream>
 #include <vector>
-#include <random> 
+#include <random>
 #include <chrono>
 static int counter=0;
 using namespace std;
@@ -27,10 +27,14 @@ std::mt19937& getGenerator() {
 }
 
 vector<int> corruptMemory(const vector<int>& memory, double p) {
-    std::bernoulli_distribution dist(p);
+    // Use epoch time (in nanoseconds) as the seed
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    bernoulli_distribution dist(p);
+
     vector<int> corrupted = memory;
     for (size_t i = 0; i < memory.size(); ++i) {
-        if (dist(getGenerator())) {
+        if (dist(generator)) {
             corrupted[i] *= -1;
         }
     }
@@ -77,20 +81,6 @@ vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weig
         state[i]=(sum>=0)?1:-1;
     }
     return state;
-}
-
-
-vector<int> corruptMemory(const vector<int> &memory, double p) {
-    static mt19937 gen(chrono::steady_clock::now().time_since_epoch().count());
-    bernoulli_distribution dist(p);
-
-    vector<int> corrupted = memory;
-    for (int i = 0; i < image_size; i++) {
-        if (dist(gen)) {
-            corrupted[i] *= -1;
-        }
-    }
-    return corrupted;
 }
 
 void normalizeWeights(int n,vector<vector<int>> weights){
