@@ -37,19 +37,32 @@ vector<int> corruptMemory(const vector<int>& memory, double p) {
     return corrupted;
 }
 
-vector<int> synchronousUpdate(const vector<int> &state,const vector<vector<int>> &weights){
-    int n=image_size;
-    vector<int> newState(n);
-    for(int i=0;i<n;i++){
-        int sum=0;
-        for(int j=0;j<n;j++){
-            sum+=weights[i][j]*state[j];
+pair<vector<int>, int> synchronousUpdate(const vector<int> &state, const vector<vector<int>> &weights) {
+    int n = image_size;
+    vector<int> currentState = state;
+    int steps = 0;
+    const int MAX_STEPS = 100;  // Prevent infinite loops
+
+    while (steps < MAX_STEPS) {
+        vector<int> newState(n);
+        for (int i = 0; i < n; i++) {
+            int sum = 0;
+            for (int j = 0; j < n; j++) {
+                sum += weights[i][j] * currentState[j];
+            }
+            newState[i] = (sum >= 0) ? 1 : -1;
         }
-        newState[i]=(sum>=0)? 1:-1;
-        counter++;
+        steps++;
+
+        if (newState == currentState) {
+            break;  // Convergence reached
+        }
+        currentState = newState;
     }
-    return newState;
+
+    return {currentState, steps};
 }
+
 vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weights){
     int n=image_size;
     random_device rd;
