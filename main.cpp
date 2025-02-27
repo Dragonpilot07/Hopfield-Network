@@ -65,7 +65,7 @@ int main() {
         }
         writePBMFile("output/recalled_pattern_sync.pbm", recalledImageSync);
         cout << "Recalled pattern (synchronous) written to 'output/recalled_pattern_sync.pbm' after " << syncSteps << " steps." << endl;
-
+        cout << "Synchronous update converged in " << syncSteps << " steps." << endl;
         // ------ ASYNCHRONOUS UPDATE ------
         vector<int> recalledPatternAsync = asynchronousUpdate(corruptedPattern, weights);
 
