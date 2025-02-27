@@ -42,30 +42,63 @@ vector<int> corruptMemory(const vector<int>& memory, double p) {
 }
 
 pair<vector<int>, int> synchronousUpdate(const vector<int> &state, const vector<vector<int>> &weights) {
-    int n = image_size;
+    int n = state.size(); // or image_size if that's accessible here
     vector<int> currentState = state;
     int steps = 0;
-    const int MAX_STEPS = 100;  // Prevent infinite loops
+    const int MAX_STEPS = 100;
+    double updateProbability = 0.5;  // Probability of updating each neuron (adjust as needed)
+
+    // Random number generation setup
+    unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
+    mt19937 gen(seed);
+    uniform_real_distribution<> dis(0.0, 1.0);
 
     while (steps < MAX_STEPS) {
         vector<int> newState(n);
-        for (int i = 0; i < n; i++) {
+
+        // Vector to keep track of which neurons to update
+        vector<int> neuronsToUpdate;
+        for (int i = 0; i < n; ++i) {
+            if (dis(gen) < updateProbability) {
+                neuronsToUpdate.push_back(i); //Select to be updated based on probability
+            }
+        }
+
+        // Update selected neurons synchronously
+        for (int i : neuronsToUpdate) {
             int sum = 0;
-            for (int j = 0; j < n; j++) {
+            for (int j = 0; j < n; ++j) {
                 sum += weights[i][j] * currentState[j];
             }
             newState[i] = (sum >= 0) ? 1 : -1;
         }
+
+        // Copy the non-updated neurons values to the new state
+        for(int i=0; i<n; ++i){
+            bool should_update = false;
+            for (int k : neuronsToUpdate) {
+                if (k==i){
+                    should_update = true;
+                    break;
+                }
+            }
+            if(!should_update){
+                newState[i] = currentState[i];
+            }
+        }
+
         steps++;
 
         if (newState == currentState) {
             break;  // Convergence reached
         }
+
         currentState = newState;
     }
 
     return {currentState, steps};
 }
+
 
 vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weights){
     int n=image_size;
