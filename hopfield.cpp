@@ -3,6 +3,7 @@
 #include <vector>
 #include <random>
 #include <chrono>
+#include <algorithm>
 static int counter=0;
 using namespace std;
 vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
@@ -19,7 +20,7 @@ vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
     }
     return weights;
 }
-#include <random>
+
 
 std::mt19937& getGenerator() {
     static std::mt19937 gen(std::random_device{}());
@@ -41,63 +42,48 @@ vector<int> corruptMemory(const vector<int>& memory, double p) {
     return corrupted;
 }
 
-pair<vector<int>, int> synchronousUpdate(const vector<int> &state, const vector<vector<int>> &weights) {
-    int n = state.size(); // or image_size if that's accessible here
-    vector<int> currentState = state;
-    int steps = 0;
-    const int MAX_STEPS = 100;
-    double updateProbability = 0.5;  // Probability of updating each neuron (adjust as needed)
+pair<vector<int>, int> synchronousUpdate(const vector<int>& state, 
+    const vector<vector<int>>& weights) {
+const int n = state.size();
+vector<int> currentState = state;
+int steps = 0;
+const int MAX_STEPS = 1000;
+const float updateProbability = 0.5f;
 
-    // Random number generation setup
-    unsigned seed = chrono::steady_clock::now().time_since_epoch().count();
-    mt19937 gen(seed);
-    uniform_real_distribution<> dis(0.0, 1.0);
+random_device rd;
+mt19937 gen(rd());
+bernoulli_distribution bern(updateProbability);
+vector<int> indices(n);
+iota(indices.begin(), indices.end(), 0);
 
-    while (steps < MAX_STEPS) {
-        vector<int> newState(n);
+while (steps < MAX_STEPS) {
+vector<int> newState = currentState;
+bool updated = false;
 
-        // Vector to keep track of which neurons to update
-        vector<int> neuronsToUpdate;
-        for (int i = 0; i < n; ++i) {
-            if (dis(gen) < updateProbability) {
-                neuronsToUpdate.push_back(i); //Select to be updated based on probability
-            }
-        }
+// Shuffle indices for true randomness
+shuffle(indices.begin(), indices.end(), gen);
 
-        // Update selected neurons synchronously
-        for (int i : neuronsToUpdate) {
-            int sum = 0;
-            for (int j = 0; j < n; ++j) {
-                sum += weights[i][j] * currentState[j];
-            }
-            newState[i] = (sum >= 0) ? 1 : -1;
-        }
+for (int i : indices) {
+if (bern(gen)) {
+int sum = inner_product(weights[i].begin(), weights[i].end(),
+  currentState.begin(), 0);
+int newValue = (sum >= 0) ? 1 : -1;
 
-        // Copy the non-updated neurons values to the new state
-        for(int i=0; i<n; ++i){
-            bool should_update = false;
-            for (int k : neuronsToUpdate) {
-                if (k==i){
-                    should_update = true;
-                    break;
-                }
-            }
-            if(!should_update){
-                newState[i] = currentState[i];
-            }
-        }
-
-        steps++;
-
-        if (newState == currentState) {
-            break;  // Convergence reached
-        }
-
-        currentState = newState;
-    }
-
-    return {currentState, steps};
+if (newValue != newState[i]) {
+newState[i] = newValue;
+steps++;
+updated = true;
 }
+}
+}
+
+if (!updated) break;
+currentState = move(newState);
+}
+
+return {currentState, steps};
+}
+
 
 
 vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weights){
