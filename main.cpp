@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include "hopfield_class.h"
+#include "hopfield.cpp"
 #include "readNwrite.cpp"  // Make sure this is correct and contains implementations
 
 float corruption = 0.1;
@@ -10,14 +10,10 @@ using namespace std;
 
 int main() {
     const int numNeurons = w * h;
-    int numImages = 25;
+    int numImages = 4;
 
     vector<string> imageFiles = {
-        "1.pbm", "2.pbm", "3.pbm", "4.pbm", "5.pbm",
-        "6.pbm", "7.pbm", "8.pbm", "9.pbm", "10.pbm",
-        "11.pbm", "12.pbm", "13.pbm", "14.pbm", "15.pbm",
-        "16.pbm", "17.pbm", "18.pbm", "19.pbm", "20.pbm",
-        "21.pbm", "22.pbm", "23.pbm", "24.pbm", "25.pbm"
+        "1.pbm", "2.pbm", "3.pbm", "4.pbm"
     };
 
     vector<vector<vector<int>>> images(numImages, vector<vector<int>>(h, vector<int>(w)));
