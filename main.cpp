@@ -1,87 +1,111 @@
+#include "hopfield_class.h"
 #include <iostream>
 #include <vector>
-#include <string>
-#include "hopfield.cpp"
-#include "readNwrite.cpp"  // Make sure this is correct and contains implementations
-
-float corruption = 0.1;
-
+#include <random>
+#include <chrono>
+#include <algorithm>
+static int counter=0;
 using namespace std;
-
-int main() {
-    const int numNeurons = w * h;
-    int numImages = 4;
-
-    vector<string> imageFiles = {
-        "1.pbm", "2.pbm", "3.pbm", "4.pbm"
-    };
-
-    vector<vector<vector<int>>> images(numImages, vector<vector<int>>(h, vector<int>(w)));
-    vector<vector<int>> patterns(numImages, vector<int>(numNeurons));
-
-    try {
-        // Read PBM files and convert to 1D patterns
-        for (int i = 0; i < numImages; i++) {
-            readPBMFile(imageFiles[i], images[i]);
-
-            for (int y = 0; y < h; y++) {
-                for (int x = 0; x < w; x++) {
-                    patterns[i][y * w + x] = (images[i][y][x] == 1) ? 1 : -1; // Convert pixel values to 1 and -1
+vector<vector<int>> trainHopfield(const vector<vector<int>> &memories){
+    int n=image_size;
+    vector<vector<int>> weights(n,vector<int>(n,0));
+    for(const auto &memory:memories){
+        for(int i=0;i<n;i++){
+            for(int j=0;j<n;j++){
+                if(i!=j){
+                    weights[i][j]+=memory[i]*memory[j];
                 }
             }
-            cout << "Read " << imageFiles[i] << endl;
         }
-
-        // Train the Hopfield network
-        vector<vector<int>> weights = trainHopfield(patterns);
-
-        // Normalize the weights (IMPORTANT!)
-        normalizeWeights(numImages, weights);
-        cout << "Hopfield network trained and weights normalized." << endl;
-
-        // Test with a corrupted version of one pattern
-        vector<int> corruptedPattern = corruptMemory(patterns[3], corruption);
-
-        // Convert corrupted pattern to 2D image for writing
-        vector<vector<int>> corruptedImage(h, vector<int>(w));
-        for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-                corruptedImage[y][x] = (corruptedPattern[y * w + x] == 1) ? 1 : 0;
-            }
-        }
-        writePBMFile("output/corrupted_pattern.pbm", corruptedImage);
-        cout << "Corrupted pattern written to 'output/corrupted_pattern.pbm'" << endl;
-
-        // ------ SYNCHRONOUS UPDATE ------
-        pair<vector<int>, int> syncResult = synchronousUpdate(corruptedPattern, weights);
-        vector<int> recalledPatternSync = syncResult.first;
-        int syncSteps = syncResult.second;
-
-        vector<vector<int>> recalledImageSync(h, vector<int>(w));
-        for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-                recalledImageSync[y][x] = (recalledPatternSync[y * w + x] == 1) ? 1 : 0;
-            }
-        }
-        writePBMFile("output/recalled_pattern_sync.pbm", recalledImageSync);
-        cout << "Recalled pattern (synchronous) written to 'output/recalled_pattern_sync.pbm' after " << syncSteps << " steps." << endl;
-        cout << "Synchronous update converged in " << syncSteps << " steps." << endl;
-        // ------ ASYNCHRONOUS UPDATE ------
-        vector<int> recalledPatternAsync = asynchronousUpdate(corruptedPattern, weights);
-
-        vector<vector<int>> recalledImageAsync(h, vector<int>(w));
-        for (int y = 0; y < h; ++y) {
-            for (int x = 0; x < w; ++x) {
-                recalledImageAsync[y][x] = (recalledPatternAsync[y * w + x] == 1) ? 1 : 0;
-            }
-        }
-        writePBMFile("output/recalled_pattern_async.pbm", recalledImageAsync);
-        cout << "Recalled pattern (asynchronous) written to 'output/recalled_pattern_async.pbm'" << endl;
-
-    } catch (const exception& e) {
-        cerr << "Error: " << e.what() << endl;
-        return 1;
     }
+    return weights;
+}
 
-    return 0;
+
+std::mt19937& getGenerator() {
+    static std::mt19937 gen(std::random_device{}());
+    return gen;
+}
+
+vector<int> corruptMemory(const vector<int>& memory, double p) {
+    // Use epoch time (in nanoseconds) as the seed
+    unsigned seed = chrono::system_clock::now().time_since_epoch().count();
+    default_random_engine generator(seed);
+    bernoulli_distribution dist(p);
+
+    vector<int> corrupted = memory;
+    for (size_t i = 0; i < memory.size(); ++i) {
+        if (dist(generator)) {
+            corrupted[i] *= -1;
+        }
+    }
+    return corrupted;
+}
+
+pair<vector<int>, int> synchronousUpdate(const vector<int>& state, 
+    const vector<vector<int>>& weights) {
+const int n = state.size();
+vector<int> currentState = state;
+int steps = 0;
+const int MAX_STEPS = 1000;
+const float updateProbability = 0.5f;
+
+random_device rd;
+mt19937 gen(rd());
+bernoulli_distribution bern(updateProbability);
+vector<int> indices(n);
+iota(indices.begin(), indices.end(), 0);
+
+while (steps < MAX_STEPS) {
+vector<int> newState = currentState;
+bool updated = false;
+
+// Shuffle indices for true randomness
+shuffle(indices.begin(), indices.end(), gen);
+
+for (int i : indices) {
+if (bern(gen)) {
+int sum = inner_product(weights[i].begin(), weights[i].end(),
+  currentState.begin(), 0);
+int newValue = (sum >= 0) ? 1 : -1;
+
+if (newValue != newState[i]) {
+newState[i] = newValue;
+steps++;
+updated = true;
+}
+}
+}
+
+if (!updated) break;
+currentState = move(newState);
+}
+
+return {currentState, steps};
+}
+
+
+
+vector<int> asynchronousUpdate(vector<int> state,const vector<vector<int>> &weights){
+    int n=image_size;
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<> dist(0,n-1);
+    for(int k=0;k<n;k++){
+        int i=dist(gen);
+        int sum=0;
+        for(int j=0;j<n;j++){
+            sum+=weights[i][j]*state[j];
+        }
+        state[i]=(sum>=0)?1:-1;
+    }
+    return state;
+}
+
+void normalizeWeights(int n,vector<vector<int>> weights){
+    for(int i=0;i<16;i++){
+        for(int j=0;j<16;j++){
+            weights[i][j]/=4;
+        }
+    }
 }
